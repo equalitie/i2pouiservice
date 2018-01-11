@@ -43,10 +43,6 @@ protected:
     boost::asio::ip::tcp::socket socket_;
     
     std::unique_ptr<i2p::client::I2PService> i2p_oui_tunnel;
-    
-    OnConnect _connect_handler;
-
-    void handle_tunnel_ready(const boost::system::error_code& err);
 };
 
 template< class MutableBufferSequence

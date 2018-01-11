@@ -9,6 +9,8 @@
 using namespace std;
 using namespace i2poui;
 
+namespace ip = boost::asio::ip;
+
 static const std::string LOCALHOST = "127.0.0.1";
 
 Channel::Channel(Service& service)
@@ -31,12 +33,35 @@ void Channel::connect( std::string target_id
     cout << "tunnel port: " << _tunnel_port << endl;
 
     i2p_oui_tunnel = std::make_unique<i2p::client::I2PClientTunnel>("i2p_oui_client", target_id, LOCALHOST, _tunnel_port, nullptr);
-    _connect_handler = connect_handler;
 
     i2p_oui_tunnel->Start();
 
     //Wait till we find a route to the service and tunnel is ready then try to acutally connect and then call the handle
-    i2p_oui_tunnel->AddReadyCallback(boost::bind(&Channel::handle_tunnel_ready, this, boost::asio::placeholders::error));
+    i2p_oui_tunnel->AddReadyCallback([ this
+                                     , h = std::move(connect_handler)
+                                     ](const boost::system::error_code& ec) {
+            if (ec) {
+                // NOTE: Executing `h` through post here because I don't know
+                // whether AddReadyCallback guarantees not to execute it's
+                // handler right a way.
+                _ios.post([ec, h = std::move(h)] { h(ec); });
+                return;
+            }
+
+            bool is_ready = i2p_oui_tunnel->GetLocalDestination()->IsReady();
+            assert(is_ready && "TODO: Can it not be ready given (!ec)?");
+
+            socket_.async_connect(ip::tcp::endpoint(ip::address_v4::loopback(), _tunnel_port),
+                                  [h = std::move(h)]
+                                  (const boost::system::error_code& ec) {
+                                      if (ec) {
+                                          std::cout << "Error: " << ec.message() << "\n";
+                                      }
+
+                                      h(ec);
+                                  });
+        });
+
     //we need to set a timeout in order to trigger the timer for checking the tunnel readyness
     i2p_oui_tunnel->SetConnectTimeout(connect_timeout);
 }
@@ -61,26 +86,4 @@ void Channel::accept(int listen_port, uint32_t connect_timeout, i2p::data::Priva
 
   //we need to set a timeout in order to trigger the timer for checking the tunnel readyness
   i2p_oui_tunnel->SetConnectTimeout(connect_timeout);
-}
-
-
-void Channel::handle_tunnel_ready(const boost::system::error_code& ec)
-{
-    if (ec) {
-        std::cout << "Error: " << ec.message() << "\n";
-        return;
-    }
-
-    bool is_ready = i2p_oui_tunnel->GetLocalDestination()->IsReady();
-    assert(is_ready && "TODO: Can it not be ready given (!ec)?");
-
-    namespace ip = boost::asio::ip;
-    socket_.async_connect(ip::tcp::endpoint(ip::address_v4::loopback(), _tunnel_port),
-                          [this] (const boost::system::error_code& ec) {
-                              if (ec) {
-                                  std::cout << "Error: " << ec.message() << "\n";
-                              }
-
-                              _connect_handler(ec);
-                          });
 }
