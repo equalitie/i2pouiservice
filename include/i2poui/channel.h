@@ -12,8 +12,6 @@ class Service;
 class Channel {
 public:
   using OnConnect = std::function<void(boost::system::error_code)>;
-  using OnReceive = std::function<void(boost::system::error_code, size_t)>;
-  using OnWrite   = std::function<void(boost::system::error_code, size_t)>;
 
 public:
     Channel(Service&);
@@ -41,7 +39,6 @@ public:
 protected:
     friend class Service;
     int _tunnel_port;
-    std::string localhost = "127.0.0.1";
     boost::asio::io_service& _ios;
     boost::asio::ip::tcp::socket socket_;
     

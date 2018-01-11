@@ -9,6 +9,8 @@
 using namespace std;
 using namespace i2poui;
 
+static const std::string LOCALHOST = "127.0.0.1";
+
 Channel::Channel(Service& service)
   : _ios(service.get_io_service()),
     socket_(_ios)
@@ -28,7 +30,7 @@ void Channel::connect( std::string target_id
 
     cout << "tunnel port: " << _tunnel_port << endl;
 
-    i2p_oui_tunnel = std::make_unique<i2p::client::I2PClientTunnel>("i2p_oui_client", target_id, localhost, _tunnel_port, nullptr);
+    i2p_oui_tunnel = std::make_unique<i2p::client::I2PClientTunnel>("i2p_oui_client", target_id, LOCALHOST, _tunnel_port, nullptr);
     _connect_handler = connect_handler;
 
     i2p_oui_tunnel->Start();
@@ -46,7 +48,7 @@ void Channel::accept(int listen_port, uint32_t connect_timeout, i2p::data::Priva
 
   local_destination = i2p::api::CreateLocalDestination(private_keys, true);
     
-  i2p_oui_tunnel = std::make_unique<i2p::client::I2PServerTunnel>("i2p_oui_server", localhost, listen_port, local_destination);
+  i2p_oui_tunnel = std::make_unique<i2p::client::I2PServerTunnel>("i2p_oui_server", LOCALHOST, listen_port, local_destination);
 
   i2p_oui_tunnel->Start();
 
