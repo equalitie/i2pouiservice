@@ -14,6 +14,7 @@ using namespace boost;
 using namespace i2poui;
 
 unique_ptr<Channel> channel;
+unique_ptr<Acceptor> g_acceptor;
 
 static string remove_new_line(string s)
 {
@@ -98,7 +99,12 @@ static void accept_and_run_chat( Service& service
 {
     cout << "Accepting on" << endl;
     cout << service.public_identity() << endl;
-    service.accept(*channel, run_chat);
+    //service.accept(*channel, run_chat);
+    service.build_acceptor([](boost::system::error_code ec, Acceptor acceptor) {
+            cout << "Acceptor has been built: " << ec.message() << endl;
+            g_acceptor = make_unique<Acceptor>(std::move(acceptor));
+            g_acceptor->accept(*channel, run_chat);
+        });
 }
 
 static void print_usage(const char* app_name)

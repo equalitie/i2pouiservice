@@ -24,10 +24,8 @@ public:
 
     boost::asio::io_service& get_io_service();
 
-    void connect(std::string target_id, uint32_t connect_timeout, OnConnect connect_handler);
+    void connect(std::string target_id, uint32_t timeout, OnConnect connect_handler);
 
-    void accept(int listen_port, uint32_t connect_timeout, i2p::data::PrivateKeys);
-    
     template< class MutableBufferSequence
             , class ReadHandler>
     void async_read_some(const MutableBufferSequence&, ReadHandler&&);
@@ -38,11 +36,11 @@ public:
 
 protected:
     friend class Service;
-    int _tunnel_port;
+    friend class Acceptor;
     boost::asio::io_service& _ios;
     boost::asio::ip::tcp::socket socket_;
     
-    std::unique_ptr<i2p::client::I2PService> i2p_oui_tunnel;
+    std::shared_ptr<i2p::client::I2PService> i2p_oui_tunnel;
 };
 
 template< class MutableBufferSequence
@@ -52,7 +50,6 @@ void Channel::async_read_some( const MutableBufferSequence& bufs
 {
     socket_.async_read_some(bufs, std::forward<ReadHandler>(h));
 }
-
 
 template< class ConstBufferSequence
         , class WriteHandler>

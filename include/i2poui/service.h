@@ -6,10 +6,12 @@
 
 namespace i2poui {
 
-class Service {
+class Acceptor;
 
+class Service {
 public:
   using OnConnect = Channel::OnConnect;
+  using OnBuildAcceptor = std::function<void(const boost::system::error_code&, Acceptor)>;
 
   Service(const std::string& datadir, boost::asio::io_service&);
 
@@ -20,10 +22,7 @@ public:
 
   std::string public_identity() const;
 
-  /**
-     chooses a port and accept on it
-   */
-  void accept(Channel&, OnConnect connect_handler);
+  void build_acceptor(OnBuildAcceptor);
 
   //access functions
   uint32_t  get_i2p_tunnel_ready_timeout() { return 5*60; /* 5 minutes */ };

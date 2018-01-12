@@ -27,6 +27,7 @@ include_directories(
 file(GLOB sources
     "${CMAKE_SOURCE_DIR}/src/channel.cpp"
     "${CMAKE_SOURCE_DIR}/src/service.cpp"
+    "${CMAKE_SOURCE_DIR}/src/acceptor.cpp"
     "${CMAKE_SOURCE_DIR}/example/chat.cpp")
 
 add_executable(chat ${sources})

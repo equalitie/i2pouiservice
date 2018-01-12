@@ -2,3 +2,4 @@
 
 #include <i2poui/channel.h>
 #include <i2poui/service.h>
+#include <i2poui/acceptor.h>
