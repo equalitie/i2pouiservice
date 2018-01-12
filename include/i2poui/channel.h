@@ -24,7 +24,8 @@ public:
 
     boost::asio::io_service& get_io_service();
 
-    void connect(std::string target_id, uint32_t timeout, OnConnect connect_handler);
+    template<class Token>
+    void connect(std::string target_id, uint32_t timeout, Token&&);
 
     template< class MutableBufferSequence
             , class ReadHandler>
@@ -35,10 +36,13 @@ public:
     void async_write_some(const ConstBufferSequence&, WriteHandler&&);
 
 protected:
+    void connect_cb(std::string target_id, uint32_t timeout, OnConnect connect_handler);
+
+protected:
     friend class Service;
     friend class Acceptor;
     boost::asio::io_service& _ios;
-    boost::asio::ip::tcp::socket socket_;
+    boost::asio::ip::tcp::socket _socket;
     
     std::shared_ptr<i2p::client::I2PService> i2p_oui_tunnel;
 };
@@ -48,7 +52,7 @@ template< class MutableBufferSequence
 void Channel::async_read_some( const MutableBufferSequence& bufs
                              , ReadHandler&& h)
 {
-    socket_.async_read_some(bufs, std::forward<ReadHandler>(h));
+    _socket.async_read_some(bufs, std::forward<ReadHandler>(h));
 }
 
 template< class ConstBufferSequence
@@ -56,7 +60,23 @@ template< class ConstBufferSequence
 void Channel::async_write_some( const ConstBufferSequence& bufs
                               , WriteHandler&& h)
 {
-    socket_.async_write_some(bufs, std::forward<WriteHandler>(h));
+    _socket.async_write_some(bufs, std::forward<WriteHandler>(h));
+}
+
+template<class Token>
+void Channel::connect(std::string target_id, uint32_t timeout, Token&& token)
+{
+  namespace asio = boost::asio;
+  namespace sys = boost::system;
+
+  using Handler = typename asio::handler_type
+      < Token
+      , void(boost::system::error_code)>::type;
+
+  Handler handler(std::forward<Token>(token));
+  asio::async_result<Handler> result(handler);
+  connect_cb(std::move(target_id), timeout, std::move(handler));
+  return result.get();
 }
 
 } // i2poui namespace

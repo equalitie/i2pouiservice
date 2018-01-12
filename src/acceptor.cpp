@@ -5,10 +5,12 @@
 using namespace std;
 using namespace i2poui;
 
+using tcp = boost::asio::ip::tcp;
+
 Acceptor::Acceptor( std::shared_ptr<i2p::client::I2PServerTunnel> i2p_server_tunnel
-                  , boost::asio::ip::tcp::acceptor tcp_acceptor)
+                  , tcp::acceptor tcp_acceptor)
     : _i2p_server_tunnel(move(i2p_server_tunnel))
-    , _tcp_acceptor(move(tcp_acceptor))
+    , _tcp_acceptor(std::make_unique<tcp::acceptor>(move(tcp_acceptor)))
 {
 }
 

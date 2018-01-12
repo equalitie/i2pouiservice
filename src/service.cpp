@@ -65,7 +65,7 @@ std::string Service::public_identity() const
   return _private_keys.GetPublic()->ToBase64();
 }
 
-void Service::build_acceptor(OnBuildAcceptor handler)
+void Service::build_acceptor_cb(OnBuildAcceptor handler)
 {
   using tcp = boost::asio::ip::tcp;
   using std::move;

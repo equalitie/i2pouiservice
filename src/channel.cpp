@@ -13,7 +13,7 @@ namespace ip = boost::asio::ip;
 
 Channel::Channel(Service& service)
   : _ios(service.get_io_service()),
-    socket_(_ios)
+    _socket(_ios)
 {
 }
 
@@ -22,9 +22,9 @@ boost::asio::io_service& Channel::get_io_service()
     return _ios;
 }
 
-void Channel::connect( std::string target_id
-                     , uint32_t connect_timeout
-                     , OnConnect connect_handler)
+void Channel::connect_cb( std::string target_id
+                        , uint32_t connect_timeout
+                        , OnConnect connect_handler)
 {
     uint16_t port = rand() % 32768 + 32768;
 
@@ -51,13 +51,9 @@ void Channel::connect( std::string target_id
             bool is_ready = i2p_oui_tunnel->GetLocalDestination()->IsReady();
             assert(is_ready && "TODO: Can it not be ready given (!ec)?");
 
-            socket_.async_connect(ip::tcp::endpoint(ip::address_v4::loopback(), port),
+            _socket.async_connect(ip::tcp::endpoint(ip::address_v4::loopback(), port),
                                   [h = std::move(h)]
                                   (const boost::system::error_code& ec) {
-                                      if (ec) {
-                                          std::cout << "Error: " << ec.message() << "\n";
-                                      }
-
                                       h(ec);
                                   });
         });

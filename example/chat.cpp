@@ -6,14 +6,13 @@
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/write.hpp>
 
-#include "i2poui.h"
+#include <i2poui.h>
 
 using namespace std;
 using namespace boost;
 
 using namespace i2poui;
 
-unique_ptr<Acceptor> g_acceptor;
 
 static string remove_new_line(string s)
 {
@@ -30,13 +29,10 @@ static string consume(asio::streambuf& buf, size_t n)
     return out;
 }
 
-static void run_chat(const boost::system::error_code& ec, std::shared_ptr<Channel> channel) {
-    auto& ios = channel->get_io_service();
+static void run_chat(Channel&& ch) {
+    auto& ios = ch.get_io_service();
 
-    if (ec) {
-      cerr << "Failed connect/accept: " << ec.message() << endl;
-      return;
-    }
+    auto channel = std::make_shared<Channel>(std::move(ch));
 
     // This co-routine reads always from the socket and write it to std out.
     asio::spawn(ios, [channel] (asio::yield_context yield) {
@@ -80,34 +76,24 @@ static void connect_and_run_chat( Service& service
                                 , asio::yield_context yield)
 {
     cout << "Connecting to " << target_id << endl;
-
-    auto channel = make_shared<Channel>(service);
-
-    channel->connect(target_id, service.get_i2p_tunnel_ready_timeout(),
-            [channel](const system::error_code& ec) {
-                run_chat(ec, channel);
-            });
-}
-
-static void keep_accepting(Service& service)
-{
-    auto channel = make_shared<Channel>(service);
-    g_acceptor->accept(*channel, [channel, &service] (const system::error_code& ec) {
-            run_chat(ec, channel);
-            keep_accepting(service);
-        });
+    Channel channel(service);
+    channel.connect(target_id, service.get_i2p_tunnel_ready_timeout(), yield);
+    run_chat(std::move(channel));
 }
 
 static void accept_and_run_chat( Service& service
                                , asio::yield_context yield)
 {
     cout << "Accepting on " << service.public_identity() << endl;
+    Acceptor acceptor = service.build_acceptor(yield);
 
-    service.build_acceptor([&service](boost::system::error_code ec, Acceptor acceptor) {
-            cout << "Acceptor has been built: " << ec.message() << endl;
-            g_acceptor = make_unique<Acceptor>(std::move(acceptor));
-            keep_accepting(service);
-        });
+    cout << "Acceptor has been built" << endl;
+
+    while (true) {
+        Channel channel(service);
+        acceptor.accept(channel, yield);
+        run_chat(std::move(channel));
+    }
 }
 
 static void print_usage(const char* app_name)
@@ -131,7 +117,7 @@ int main(int argc, char* const* argv)
 
     Service service(argv[1], ios);
 
-    asio::spawn(ios, [&] (auto yield) {
+    asio::spawn(ios, [&] (asio::yield_context yield) {
             if (is_client) {
               connect_and_run_chat(service, argv[2], yield);
             }
