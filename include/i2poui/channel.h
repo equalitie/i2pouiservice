@@ -3,7 +3,11 @@
 #include <memory>
 #include <boost/system/error_code.hpp>
 #include <boost/asio.hpp>
-#include "I2PTunnel.h"
+
+// Forward declarations of i2p classes
+namespace i2p { namespace client {
+    class I2PService;
+}} // i2p::client namespace
 
 namespace i2poui {
 

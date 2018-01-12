@@ -2,6 +2,8 @@
 #include <i2poui/channel.h>
 #include <i2poui/acceptor.h>
 
+#include "I2PTunnel.h"
+
 using namespace std;
 using namespace i2poui;
 
@@ -14,3 +16,14 @@ Acceptor::Acceptor( std::shared_ptr<i2p::client::I2PServerTunnel> i2p_server_tun
 {
 }
 
+void Acceptor::accept_cb(Channel& channel, OnAccept handler)
+{
+    _tcp_acceptor->async_accept(channel._socket,
+                            [ ch = &channel
+                            , h = std::move(handler)
+                            , tunnel = _i2p_server_tunnel
+                            ] (const boost::system::error_code& ec) mutable {
+                                ch->i2p_oui_tunnel = tunnel;
+                                h(ec);
+                            });
+}

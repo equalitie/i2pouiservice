@@ -5,6 +5,11 @@
 #include <i2poui/channel.h>
 #include <i2poui/acceptor.h>
 
+// Forward declarations of i2p classes
+namespace i2p { namespace data {
+    class PrivateKeys;
+}} // i2p::client namespace
+
 namespace i2poui {
 
 class Service {
@@ -27,13 +32,15 @@ public:
   //access functions
   uint32_t  get_i2p_tunnel_ready_timeout() { return 5*60; /* 5 minutes */ };
 
+  ~Service();
+
 protected:
   void build_acceptor_cb(OnBuildAcceptor);
 
 protected:
   boost::asio::io_service& _ios;
   std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor_;
-  i2p::data::PrivateKeys _private_keys;
+  std::unique_ptr<i2p::data::PrivateKeys> _private_keys;
 };
 
 template<class Token>

@@ -4,6 +4,7 @@
 #include <i2poui/acceptor.h>
 
 //i2p stuff
+#include "I2PTunnel.h"
 #include "Log.h"
 #include "api.h"
 
@@ -35,6 +36,7 @@ static string load_private_key()
 
 Service::Service(const string& datadir, boost::asio::io_service& ios)
   : _ios(ios)
+  , _private_keys(std::make_unique<i2p::data::PrivateKeys>())
 {
   //here we are going to read the config file and
   //set options based on those values for now we just
@@ -52,7 +54,7 @@ Service::Service(const string& datadir, boost::asio::io_service& ios)
   i2p::api::InitI2P(argv.size(), (char**) argv.data(), argv[0]);
   i2p::api::StartI2P();
 
-  _private_keys.FromBase64(load_private_key());
+  _private_keys->FromBase64(load_private_key());
 }
 
 boost::asio::io_service& Service::get_io_service()
@@ -62,7 +64,7 @@ boost::asio::io_service& Service::get_io_service()
 
 std::string Service::public_identity() const
 {
-  return _private_keys.GetPublic()->ToBase64();
+  return _private_keys->GetPublic()->ToBase64();
 }
 
 void Service::build_acceptor_cb(OnBuildAcceptor handler)
@@ -77,7 +79,7 @@ void Service::build_acceptor_cb(OnBuildAcceptor handler)
 
   // We need to make a local destination first.
   std::shared_ptr<i2p::client::ClientDestination> local_dst;
-  local_dst = i2p::api::CreateLocalDestination(_private_keys, true);
+  local_dst = i2p::api::CreateLocalDestination(*_private_keys, true);
 
   auto i2p_tunnel =
       std::make_shared<i2p::client::I2PServerTunnel>("i2p_oui_server",
@@ -99,3 +101,5 @@ void Service::build_acceptor_cb(OnBuildAcceptor handler)
   // tunnel readyness
   i2p_tunnel->SetConnectTimeout(get_i2p_tunnel_ready_timeout());
 }
+
+Service::~Service() {}
