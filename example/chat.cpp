@@ -13,7 +13,6 @@ using namespace boost;
 
 using namespace i2poui;
 
-unique_ptr<Channel> channel;
 unique_ptr<Acceptor> g_acceptor;
 
 static string remove_new_line(string s)
@@ -31,17 +30,7 @@ static string consume(asio::streambuf& buf, size_t n)
     return out;
 }
 
-
-void handle_read_echo(const boost::system::error_code& ec, asio::streambuf& buffer)
-{
-    if (ec || !channel) return;
-
-    cout << "Received: "
-         << remove_new_line(consume(buffer, buffer.size()))
-         << endl;
-}
-
-static void run_chat(const boost::system::error_code& ec) {
+static void run_chat(const boost::system::error_code& ec, std::shared_ptr<Channel> channel) {
     auto& ios = channel->get_io_service();
 
     if (ec) {
@@ -50,7 +39,7 @@ static void run_chat(const boost::system::error_code& ec) {
     }
 
     // This co-routine reads always from the socket and write it to std out.
-    asio::spawn(ios, [] (asio::yield_context yield) {
+    asio::spawn(ios, [channel] (asio::yield_context yield) {
             system::error_code ec;
             asio::streambuf buffer(512);
 
@@ -66,7 +55,7 @@ static void run_chat(const boost::system::error_code& ec) {
         });
 
     // This co-routine reads from std input and send it to peer
-    asio::spawn(ios, [&ios] (auto yield) {
+    asio::spawn(ios, [&ios, channel] (auto yield) {
             system::error_code ec;
             asio::posix::stream_descriptor input(ios, ::dup(STDIN_FILENO)); 
 
@@ -91,48 +80,60 @@ static void connect_and_run_chat( Service& service
                                 , asio::yield_context yield)
 {
     cout << "Connecting to " << target_id << endl;
-    channel->connect(target_id, service.get_i2p_tunnel_ready_timeout(), run_chat);
+
+    auto channel = make_shared<Channel>(service);
+
+    channel->connect(target_id, service.get_i2p_tunnel_ready_timeout(),
+            [channel](const system::error_code& ec) {
+                run_chat(ec, channel);
+            });
+}
+
+static void keep_accepting(Service& service)
+{
+    auto channel = make_shared<Channel>(service);
+    g_acceptor->accept(*channel, [channel, &service] (const system::error_code& ec) {
+            run_chat(ec, channel);
+            keep_accepting(service);
+        });
 }
 
 static void accept_and_run_chat( Service& service
                                , asio::yield_context yield)
 {
-    cout << "Accepting on" << endl;
-    cout << service.public_identity() << endl;
-    //service.accept(*channel, run_chat);
-    service.build_acceptor([](boost::system::error_code ec, Acceptor acceptor) {
+    cout << "Accepting on " << service.public_identity() << endl;
+
+    service.build_acceptor([&service](boost::system::error_code ec, Acceptor acceptor) {
             cout << "Acceptor has been built: " << ec.message() << endl;
             g_acceptor = make_unique<Acceptor>(std::move(acceptor));
-            g_acceptor->accept(*channel, run_chat);
+            keep_accepting(service);
         });
 }
 
 static void print_usage(const char* app_name)
 {
     cerr << "Usage:\n";
-    cerr << "    " << app_name << " [peer-id]\n";
+    cerr << "    " << app_name << " <homedir> [peer-id]\n";
     cerr << "If [peer-id] is used the app acts as a client, "
             "otherwise it acts as a server\n";
 }
 
 int main(int argc, char* const* argv)
 {
-    if (argc != 1 && argc != 2) {
+    if (argc != 2 && argc != 3) {
         print_usage(argv[0]);
         return 1;
     }
 
     asio::io_service ios;
 
-    bool is_client = argc >= 2;
+    bool is_client = argc >= 3;
 
-    Service service(is_client ? "chat_client" : "chat_server", ios);
+    Service service(argv[1], ios);
 
     asio::spawn(ios, [&] (auto yield) {
-            channel = make_unique<Channel>(service);
-
             if (is_client) {
-              connect_and_run_chat(service, argv[1], yield);
+              connect_and_run_chat(service, argv[2], yield);
             }
             else {
               accept_and_run_chat(service, yield);
