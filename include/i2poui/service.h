@@ -23,6 +23,9 @@ public:
   Service(const Service&) = delete;
   Service& operator=(const Service&) = delete;
 
+  Service(Service&&);
+  Service& operator=(Service&&);
+
   boost::asio::io_service& get_io_service();
 
   std::string public_identity() const;

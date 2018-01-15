@@ -57,6 +57,20 @@ Service::Service(const string& datadir, boost::asio::io_service& ios)
   _private_keys->FromBase64(load_private_key());
 }
 
+Service::Service(Service&& other)
+    : _ios(other._ios)
+    , acceptor_(move(other.acceptor_))
+    , _private_keys(move(other._private_keys))
+{}
+
+Service& Service::operator=(Service&& other)
+{
+    assert(&_ios == &other._ios);
+    acceptor_ = move(other.acceptor_);
+    _private_keys = move(other._private_keys);
+    return *this;
+}
+
 boost::asio::io_service& Service::get_io_service()
 {
   return _ios;
