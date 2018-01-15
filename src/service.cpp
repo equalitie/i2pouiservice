@@ -101,11 +101,16 @@ void Service::build_acceptor_cb(OnBuildAcceptor handler)
 
   i2p_tunnel->Start();
 
+  // I2Pd doesn't implicitly keep io_service bussy, so we need to
+  // do it ourselves.
+  auto work = std::make_shared<boost::asio::io_service::work>(_ios);
+
   // Wait till we find a route to the service and tunnel is ready then try to
   // acutally connect and then call the handl
   i2p_tunnel->AddReadyCallback([ handler = move(handler)
                                , tcp_acceptor
                                , i2p_tunnel
+                               , work
                                ](const boost::system::error_code& ec) mutable {
           Acceptor acceptor(i2p_tunnel, move(*tcp_acceptor));
           handler(ec, move(acceptor));
@@ -129,12 +134,15 @@ void Service::build_connector_cb(const string& target_id, OnBuildConnector handl
 
     i2p_tunnel->Start();
 
-    // Wait till we find a route to the service and tunnel is ready then try to
-    // acutally connect and then call the handle
+    // I2Pd doesn't implicitly keep io_service bussy, so we need to
+    // do it ourselves.
+    auto work = std::make_shared<boost::asio::io_service::work>(_ios);
+
     i2p_tunnel->AddReadyCallback([ this
                                  , h = std::move(handler)
                                  , port
                                  , i2p_tunnel
+                                 , work
                                  ](const boost::system::error_code& ec) {
             bool is_ready = i2p_tunnel->GetLocalDestination()->IsReady();
             assert((ec || is_ready) && "TODO: Can it not be ready given (!ec)?");

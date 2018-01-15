@@ -127,6 +127,5 @@ int main(int argc, char* const* argv)
             }
         });
 
-    boost::asio::io_service::work work(ios);
     ios.run();
 }
