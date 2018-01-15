@@ -102,4 +102,43 @@ void Service::build_acceptor_cb(OnBuildAcceptor handler)
   i2p_tunnel->SetConnectTimeout(get_i2p_tunnel_ready_timeout());
 }
 
+void Service::build_connector_cb(const string& target_id, OnBuildConnector handler)
+{
+    // TODO: Let the system give us a random _and unused_ port.
+    uint16_t port = rand() % 32768 + 32768;
+
+    // TODO: This should be a member, so that we can cancel it when Service
+    // is destroyed (between Start and OnReady).
+    auto i2p_tunnel =
+        std::make_shared<i2p::client::I2PClientTunnel>("i2p_oui_client",
+                target_id, "127.0.0.1", port, nullptr);
+
+    i2p_tunnel->Start();
+
+    // Wait till we find a route to the service and tunnel is ready then try to
+    // acutally connect and then call the handle
+    i2p_tunnel->AddReadyCallback([ this
+                                 , h = std::move(handler)
+                                 , port
+                                 , i2p_tunnel
+                                 ](const boost::system::error_code& ec) {
+            bool is_ready = i2p_tunnel->GetLocalDestination()->IsReady();
+            assert((ec || is_ready) && "TODO: Can it not be ready given (!ec)?");
+
+            Connector connector(port, i2p_tunnel);
+
+            // NOTE: Executing `h` through post here because I don't know
+            // whether AddReadyCallback guarantees not to execute it's
+            // handler right a way.
+            _ios.post([ec, h = std::move(h), c = std::move(connector)] {
+                    h(ec, std::move(c));
+                });
+
+        });
+
+    // We need to set a timeout in order to trigger the timer for checking the
+    // tunnel readyness
+    i2p_tunnel->SetConnectTimeout(get_i2p_tunnel_ready_timeout());
+}
+
 Service::~Service() {}

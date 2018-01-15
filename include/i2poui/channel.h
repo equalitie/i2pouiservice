@@ -12,6 +12,7 @@ namespace i2p { namespace client {
 namespace i2poui {
 
 class Service;
+class Connector;
 
 class Channel {
 public:
@@ -29,7 +30,7 @@ public:
     boost::asio::io_service& get_io_service();
 
     template<class Token>
-    void connect(std::string target_id, uint32_t timeout, Token&&);
+    void connect(Connector&, Token&&);
 
     template< class MutableBufferSequence
             , class ReadHandler>
@@ -40,7 +41,7 @@ public:
     void async_write_some(const ConstBufferSequence&, WriteHandler&&);
 
 protected:
-    void connect_cb(std::string target_id, uint32_t timeout, OnConnect connect_handler);
+    void connect_cb(Connector&, OnConnect);
 
 protected:
     friend class Service;
@@ -68,7 +69,7 @@ void Channel::async_write_some( const ConstBufferSequence& bufs
 }
 
 template<class Token>
-void Channel::connect(std::string target_id, uint32_t timeout, Token&& token)
+void Channel::connect(Connector& connector, Token&& token)
 {
   namespace asio = boost::asio;
   namespace sys = boost::system;
@@ -79,7 +80,7 @@ void Channel::connect(std::string target_id, uint32_t timeout, Token&& token)
 
   Handler handler(std::forward<Token>(token));
   asio::async_result<Handler> result(handler);
-  connect_cb(std::move(target_id), timeout, std::move(handler));
+  connect_cb(connector, std::move(handler));
   return result.get();
 }
 

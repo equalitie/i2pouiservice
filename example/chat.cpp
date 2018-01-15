@@ -76,8 +76,9 @@ static void connect_and_run_chat( Service& service
                                 , asio::yield_context yield)
 {
     cout << "Connecting to " << target_id << endl;
+    Connector connector = service.build_connector(target_id, yield);
     Channel channel(service);
-    channel.connect(target_id, service.get_i2p_tunnel_ready_timeout(), yield);
+    channel.connect(connector, yield);
     run_chat(std::move(channel));
 }
 
