@@ -15,7 +15,8 @@ find_package(Boost ${BOOST_VERSION} COMPONENTS filesystem
                                                coroutine
                                                REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -ggdb ${SANITIZE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -ggdb2 ${SANITIZE} -O0")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -ggdb ${SANITIZE} ")
 
 include_directories(
     "${Boost_INCLUDE_DIR}"
@@ -53,7 +54,7 @@ find_package(Boost ${BOOST_VERSION} COMPONENTS filesystem
                                                coroutine
                                                REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -ggdb ${SANITIZE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -ggdb2 ${SANITIZE} -O0")
 
 include_directories(
     "${Boost_INCLUDE_DIR}"

@@ -37,6 +37,9 @@
 \.\#*
 *~
 
+#elisp debug scripts
+gdb*.el
+
 #gtag files
 GPATH
 GRTAGS
@@ -63,3 +66,6 @@ missing
 #binaries
 example/i2pouichat
 src/get_slash
+
+CMake scratch
+/build
