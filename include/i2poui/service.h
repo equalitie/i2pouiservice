@@ -48,7 +48,7 @@ template<class Token>
             <Token, void(system::error_code, Acceptor)>::type;
 
     Handler handler(std::forward<Token>(token));
-    return std::move(Acceptor(_data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios, handler));
+    return std::move(Acceptor(_data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios, move(handler));
 }
 
 template<class Token>
