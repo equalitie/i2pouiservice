@@ -1,22 +1,16 @@
 #pragma once
 
+#include <vector>
 #include <boost/asio.hpp>
 
 #include <i2poui/channel.h>
 #include <i2poui/acceptor.h>
 #include <i2poui/connector.h>
 
-// Forward declarations of i2p classes
-namespace i2p { namespace data {
-    class PrivateKeys;
-}} // i2p::client namespace
-
 namespace i2poui {
 
 class Service {
 public:
-  using OnBuildAcceptor  = std::function<void(boost::system::error_code, Acceptor)>;
-  using OnBuildConnector = std::function<void(boost::system::error_code, Connector)>;
 
   Service(const std::string& datadir, boost::asio::io_service&);
 
@@ -28,10 +22,8 @@ public:
 
   boost::asio::io_service& get_io_service();
 
-  std::string public_identity() const;
-
   template<class Token>
-  auto build_acceptor(Token&&);
+  auto build_acceptor(std::string private_key_filename, Token&&);
 
   template<class Token>
   auto build_connector(const std::string& target_id, Token&&);
@@ -42,17 +34,13 @@ public:
   ~Service();
 
 protected:
-  void build_acceptor_cb(OnBuildAcceptor);
-  void build_connector_cb(const std::string& target_id, OnBuildConnector);
-
-protected:
+  std::string _data_dir;
   boost::asio::io_service& _ios;
-  std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor_;
-  std::unique_ptr<i2p::data::PrivateKeys> _private_keys;
+  std::vector<std::unique_ptr<Acceptor>> _acceptors;
 };
 
 template<class Token>
-auto Service::build_acceptor(Token&& token)
+  auto Service::build_acceptor(std::string private_key_filename, Token&& token)
 {
     using namespace boost;
 
@@ -60,9 +48,7 @@ auto Service::build_acceptor(Token&& token)
             <Token, void(system::error_code, Acceptor)>::type;
 
     Handler handler(std::forward<Token>(token));
-    asio::async_result<Handler> result(handler);
-    build_acceptor_cb(std::move(handler));
-    return result.get();
+    return std::move(Acceptor(_data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios, handler));
 }
 
 template<class Token>
@@ -75,8 +61,7 @@ auto Service::build_connector(const std::string& target_id, Token&& token)
 
     Handler handler(std::forward<Token>(token));
     asio::async_result<Handler> result(handler);
-    build_connector_cb(target_id, std::move(handler));
-    return result.get();
+    return Connector(target_id, std::move(handler));
 }
 
 } // i2poui namespace

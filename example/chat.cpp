@@ -82,11 +82,11 @@ static void connect_and_run_chat( Service& service
     run_chat(std::move(channel));
 }
 
-static void accept_and_run_chat( Service& service
+static void accept_and_run_chat( Service& service, string key_file_name
                                , asio::yield_context yield)
 {
-    cout << "Accepting on " << service.public_identity() << endl;
-    Acceptor acceptor = service.build_acceptor(yield);
+    Acceptor acceptor = service.build_acceptor(key_file_name, yield);
+    cout << "Accepting on " << acceptor.public_identity() << endl;
 
     cout << "Acceptor has been built" << endl;
 
@@ -116,14 +116,14 @@ int main(int argc, char* const* argv)
 
     bool is_client = argc >= 3;
 
-    Service service(argv[1], ios);
+    Service service(ios);
 
     asio::spawn(ios, [&] (asio::yield_context yield) {
             if (is_client) {
               connect_and_run_chat(service, argv[2], yield);
             }
             else {
-              accept_and_run_chat(service, yield);
+              accept_and_run_chat(service, argv[1], yield);
             }
         });
 
