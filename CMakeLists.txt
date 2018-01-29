@@ -1,14 +1,14 @@
 cmake_minimum_required (VERSION 2.8)
 ################################################################################
 set(CMAKE_BUILD_TYPE Debug)
-set(BOOST_VERSION 1.65.1)
+set(BOOST_VERSION 1.62)
 
 ################################################################################
 add_subdirectory(./i2pd/build)
 
 ################################################################################
 project(i2poui)
-find_package(Boost ${BOOST_VERSION} EXACT REQUIRED COMPONENTS)
+find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -ggdb ${SANITIZE}")
 
@@ -41,7 +41,7 @@ set(I2POUI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
 ################################################################################
 project(chat)
 
-find_package(Boost ${BOOST_VERSION} EXACT REQUIRED COMPONENTS filesystem
+find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS filesystem
                                                               program_options
                                                               date_time
                                                               thread
