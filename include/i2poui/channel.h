@@ -47,9 +47,10 @@ protected:
     friend class Service;
     friend class Acceptor;
     boost::asio::io_service& _ios;
-    boost::asio::ip::tcp::socket _socket;
+    std::vector<shared_ptr<boost::asio::ip::tcp::socket>> _connections;
     
     std::shared_ptr<i2p::client::I2PService> i2p_oui_tunnel;
+    
 };
 
 template< class MutableBufferSequence

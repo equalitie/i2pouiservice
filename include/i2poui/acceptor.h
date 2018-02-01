@@ -1,4 +1,5 @@
 #pragma once
+#include "Identity.h"
 
 // Forward declarations of i2p classes
 namespace i2p { namespace data {
@@ -12,45 +13,52 @@ namespace i2p { namespace client {
 
 namespace i2poui {
 
-class Acceptor {
+class Acceptor public: Channel {
     using OnAccept = std::function<void(const boost::system::error_code&)>;
 
 public:
     using OnBuildAcceptor  = std::function<void(boost::system::error_code, Acceptor)>;
 
-    Acceptor() {}
+    Acceptor()
+     {}
 
     template<class Token>
     void accept(Channel&, Token&&);
 
     std::string public_identity() const;
-
- protected:
-    friend class Service;
-    void load_private_key(std::string key_file_name);
     
     // Acceptor is built by the i2poui::Service
     Acceptor(std::string private_key_filename, uint32_t timeout, boost::asio::io_service& _ios, OnAccept handler);
 
-    void accept_cb(Channel&, OnAccept);
+ protected:
+    friend class Service;
+    void load_private_key(std::string key_file_name);
 
-    std::unique_ptr<i2p::data::PrivateKeys> _private_keys;
+    i2p::data::PrivateKeys _private_keys;
     std::shared_ptr<i2p::client::I2PServerTunnel> _i2p_server_tunnel;
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _tcp_acceptor;
 };
 
 template<class Token>
 inline
-void Acceptor::accept(Channel& channel, Token&& token)
+void Acceptor::accept(Token&& token)
 {
     using Handler = typename boost::asio::handler_type
         < Token
         , void(boost::system::error_code)>::type;
 
     Handler handler(std::forward<Token>(token));
-    boost::asio::async_result<Handler> result(handler);
-    accept_cb(channel, std::move(handler));
-    return result.get();
-}
+
+    _connections.push_back(std::make_shared<boost::asio::ip::tcp::socket>());
+    connection_socket = _connections.back()
+    _tcp_acceptor->async_accept(connection_socket,
+                                [ this,
+                                  connection_socket,
+                                  h = std::move(handler);
+                                  ] (const boost::system::error_code& ec) mutable {
+                                  h(connection_socket);
+                            });
+
+   return connection_socket;
 
 } // i2poui namespace

@@ -8,9 +8,9 @@ namespace i2poui {
 
 class Connector {
 public:
-  using OnBuildConnector = std::function<void(boost::system::error_code, Connector)>;
+  using OnBuildConnector = std::function<void(boost::system::error_code)>;
 
-  Connector(const std::string& target_id, OnBuildConnector handler);
+  Connector(const std::string& target_id, uint32_t timeout, boost::asio::io_service& ios, OnBuildConnector handler);
 
 private:
     friend class Channel;

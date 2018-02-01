@@ -36,7 +36,8 @@ public:
 protected:
   std::string _data_dir;
   boost::asio::io_service& _ios;
-  std::vector<std::unique_ptr<Acceptor>> _acceptors;
+  std::vector<std::shared_ptr<Acceptor>> _acceptors;
+  
 };
 
 template<class Token>
@@ -45,10 +46,11 @@ template<class Token>
     using namespace boost;
 
     using Handler = typename asio::handler_type
-            <Token, void(system::error_code, Acceptor)>::type;
+            <Token, void(system::error_code)>::type;
 
     Handler handler(std::forward<Token>(token));
-    return std::move(Acceptor(_data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios, move(handler));
+    _acceptors.push_back(std::make_shared<Acceptor>(_data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios, std::move(handler)));
+    return _acceptors.back();
 }
 
 template<class Token>
@@ -57,11 +59,10 @@ auto Service::build_connector(const std::string& target_id, Token&& token)
     using namespace boost;
 
     using Handler = typename asio::handler_type
-            <Token, void(system::error_code, Connector)>::type;
+            <Token, void(system::error_code)>::type;
 
     Handler handler(std::forward<Token>(token));
-    asio::async_result<Handler> result(handler);
-    return Connector(target_id, std::move(handler));
+    return std::move(Connector(target_id, get_i2p_tunnel_ready_timeout(), _ios, std::move(handler)));
 }
 
 } // i2poui namespace

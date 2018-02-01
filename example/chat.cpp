@@ -13,6 +13,7 @@ using namespace boost;
 
 using namespace i2poui;
 
+std::shared_ptr<Acceptor> acceptor;
 
 static string remove_new_line(string s)
 {
@@ -29,7 +30,7 @@ static string consume(asio::streambuf& buf, size_t n)
     return out;
 }
 
-static void run_chat(Channel&& ch) {
+static void run_chat(boost::asio::ip::tcp::socket connection) {
     auto& ios = ch.get_io_service();
 
     auto channel = std::make_shared<Channel>(std::move(ch));
@@ -82,19 +83,17 @@ static void connect_and_run_chat( Service& service
     run_chat(std::move(channel));
 }
 
-static void accept_and_run_chat( Service& service, string key_file_name
-                               , asio::yield_context yield)
+static void accept_and_run_chat( Service& service
+                                 , asio::yield_context yield)
 {
-    Acceptor acceptor = service.build_acceptor(key_file_name, yield);
-    cout << "Accepting on " << acceptor.public_identity() << endl;
+  acceptor = service.build_acceptor("private_key", [&] (const boost::system::error_code& ec) {
+        
+  cout << "Accepting on " << acceptor->public_identity() << endl;
 
-    cout << "Acceptor has been built" << endl;
+  cout << "Acceptor has been built" << endl;
 
-    while (true) {
-        Channel channel(service);
-        acceptor.accept(channel, yield);
-        run_chat(std::move(channel));
-    }
+  acceptor->accept(run_chat);
+  cout << "we are here" << endl;});
 }
 
 static void print_usage(const char* app_name)
@@ -107,7 +106,7 @@ static void print_usage(const char* app_name)
 
 int main(int argc, char* const* argv)
 {
-    if (argc != 2 && argc != 3) {
+    if (argc != 2 && argc != 4) {
         print_usage(argv[0]);
         return 1;
     }
@@ -116,14 +115,14 @@ int main(int argc, char* const* argv)
 
     bool is_client = argc >= 3;
 
-    Service service(ios);
+    Service service(argv[1], ios);
 
     asio::spawn(ios, [&] (asio::yield_context yield) {
             if (is_client) {
               connect_and_run_chat(service, argv[2], yield);
             }
             else {
-              accept_and_run_chat(service, argv[1], yield);
+              accept_and_run_chat(service, yield);
             }
         });
 
