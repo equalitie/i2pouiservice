@@ -54,3 +54,21 @@ boost::asio::io_service& Service::get_io_service()
 }
 
 Service::~Service() {}
+
+void Service::build_acceptor(std::string private_key_filename)
+{
+    using namespace boost;
+
+    _acceptors.push_back(std::make_shared<Acceptor>(_data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios, std::move(handler)));
+
+    return _acceptors.back();
+}
+
+GenericConnector Service::build_connector(std::string private_key_filename)
+{
+    using namespace boost;
+
+    _connectors.push_back(std::make_shared<Connectors>(_data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios, std::move(handler)));
+
+    return _connectors.back();
+}

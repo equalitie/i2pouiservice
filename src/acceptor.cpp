@@ -41,18 +41,35 @@ Acceptor::Acceptor(string private_key_filename, uint32_t timeout, boost::asio::i
   // do it ourselves.
   auto work = std::make_shared<boost::asio::io_service::work>(ios);
 
-  // Wait till we find a route to the service and tunnel is ready then try to
-  // acutally connect and then call the handl
-  _i2p_server_tunnel->AddReadyCallback([ handler = move(handler)
-                               , work
-                               ](const boost::system::error_code& ec) mutable {
-          handler(ec);
-      });
-
   // We need to set a timeout in order to trigger the timer for checking the
   // tunnel readyness
   _i2p_server_tunnel->SetConnectTimeout(timeout);
   
+}
+
+void Acceptor::is_ready(OnReadytoAccept handler)
+{
+  // Wait till we find a route to the service and tunnel is ready then try to
+  // acutally connect and then call the handl
+  _i2p_server_tunnel->AddReadyCallback([ handler = move(handler),
+                               ](const boost::system::error_code& ec) mutable {
+                                         handler(ec);
+                                       });
+
+}
+
+void Acceptor::accept_cb(OnAccept handler)
+{
+  _connections.push_back(std::make_shared<boost::asio::ip::tcp::socket>());
+  connection_socket = _connections.back();
+  _tcp_acceptor->async_accept(connection_socket,
+                              [ this,
+                                connection_socket,
+                                h = std::move(handler);
+                                ] (const boost::system::error_code& ec) mutable {
+                                h(connection_socket);
+                              });
+
 }
 
 std::string Acceptor::public_identity() const
