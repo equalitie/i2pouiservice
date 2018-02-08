@@ -2,7 +2,6 @@
 #include <streambuf>
 
 #include <i2poui/service.h>
-#include <i2poui/channel.h>
 #include <i2poui/acceptor.h>
 
 #include "Destination.h"
@@ -14,7 +13,8 @@ using namespace i2poui;
 
 using tcp = boost::asio::ip::tcp;
 
-Acceptor::Acceptor(string private_key_filename, uint32_t timeout, boost::asio::io_service& ios, OnAccept handler)
+Acceptor::Acceptor(string private_key_filename, uint32_t timeout, boost::asio::io_service& ios)
+  :_ios(ios)
 {
   using tcp = boost::asio::ip::tcp;
   using std::move;
@@ -47,12 +47,11 @@ Acceptor::Acceptor(string private_key_filename, uint32_t timeout, boost::asio::i
   
 }
 
-void Acceptor::is_ready(OnReadytoAccept handler)
+void Acceptor::is_ready_cb(OnReadyToAccept handler)
 {
   // Wait till we find a route to the service and tunnel is ready then try to
   // acutally connect and then call the handl
-  _i2p_server_tunnel->AddReadyCallback([ handler = move(handler),
-                               ](const boost::system::error_code& ec) mutable {
+  _i2p_server_tunnel->AddReadyCallback([ handler = move(handler)](const boost::system::error_code& ec) mutable {
                                          handler(ec);
                                        });
 
@@ -60,14 +59,15 @@ void Acceptor::is_ready(OnReadytoAccept handler)
 
 void Acceptor::accept_cb(OnAccept handler)
 {
-  _connections.push_back(std::make_shared<boost::asio::ip::tcp::socket>());
-  connection_socket = _connections.back();
-  _tcp_acceptor->async_accept(connection_socket,
+  
+  _connections.push_back(boost::asio::ip::tcp::socket(_ios));
+  boost::asio::ip::tcp::socket& connection_socket =  _connections.back();
+  _tcp_acceptor->async_accept( connection_socket,
                               [ this,
-                                connection_socket,
-                                h = std::move(handler);
+                                &connection_socket,
+                                h = std::move(handler)
                                 ] (const boost::system::error_code& ec) mutable {
-                                h(connection_socket);
+                                 h(ec, connection_socket);
                               });
 
 }

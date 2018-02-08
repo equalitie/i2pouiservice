@@ -4,40 +4,34 @@ namespace i2p { namespace client {
     class I2PClientTunnel;
 }}
 
-namespace i2poui {
-
-class Connector {
+template<class GenericConnectorImplementation>
+class GenericConnector {
 public:
-    Connector() {};
-    Connector(uint16_t port, std::shared_ptr<i2p::client::I2PClientTunnel>);
+      using OnReadyToConnect = std::function<void(const boost::system::error_code&)>;
 
-private:
-    friend class Channel;
+    GenericConnector() {};
+    GenericConnector(uint16_t port, std::shared_ptr<i2p::client::I2PClientTunnel>);
 
-    uint16_t _port;
-    std::shared_ptr<i2p::client::I2PClientTunnel> _i2p_tunnel;
 };
 
+template<class ConnectorImplementation>
 inline
-Connector::Connector(uint16_t port,
+GenericConnector<ConnectorImplementation>::GenericConnector(uint16_t port,
         std::shared_ptr<i2p::client::I2PClientTunnel> i2p_tunnel)
-    : _port(port)
-    , _i2p_tunnel(std::move(i2p_tunnel))
 {
 }
 
- template<class Token>
-auto Service::build_connector(const std::string& target_id, Token&& token)
-{
-    using namespace boost;
+/* template<class Token> */
+/* auto Connector::build_connector(const std::string& target_id, Token&& token) */
+/* { */
+/*     using namespace boost; */
 
-    using Handler = typename asio::handler_type
-            <Token, void(system::error_code, Connector)>::type;
+/*     using Handler = typename asio::handler_type */
+/*             <Token, void(system::error_code, Connector)>::type; */
 
-    Handler handler(std::forward<Token>(token));
-    asio::async_result<Handler> result(handler);
-    static_cast<ServiceImplementation*>(this)->build_connector_cb(target_id, std::move(handler));
-    return result.get();
-}
+/*     Handler handler(std::forward<Token>(token)); */
+/*     asio::async_result<Handler> result(handler); */
+/*     static_cast<ServiceImplementation*>(this)->build_connector_cb(target_id, std::move(handler)); */
+/*     return result.get(); */
+/* } */
 
-} // i2poui namespace

@@ -2,9 +2,8 @@
 
 #include <boost/asio.hpp>
 
-#include <i2poui/channel.h>
-#include <i2poui/acceptor.h>
-#include <i2poui/connector.h>
+#include <generic_oui_acceptor.h>
+#include <generic_oui_connector.h>
 
 // Forward declarations of i2p classes
 namespace i2p { namespace data {
@@ -13,20 +12,17 @@ namespace i2p { namespace data {
 
 class GenericService {
 public:
-  Service(const std::string& datadir, boost::asio::io_service&);
+  GenericService(const std::string& datadir, boost::asio::io_service&);
 
-  Service(const Service&) = delete;
-  Service& operator=(const Service&) = delete;
+  GenericService(const GenericService&) = delete;
+  GenericService& operator=(const GenericService&) = delete;
 
-  Service(Service&&);
-  Service& operator=(Service&&);
+  GenericService(GenericService&&);
+  GenericService& operator=(GenericService&&);
 
   boost::asio::io_service& get_io_service();
 
-  shared_ptr<GenericAcceptor> build_acceptor(std::string private_key_filename, std::string private_key_filename);
-  shared_ptr<GenericConnector> build_connector(const std::string& target_id);
-
-  ~Service();
+  ~GenericService();
 
 protected:
   boost::asio::io_service& _ios;

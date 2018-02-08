@@ -25,10 +25,10 @@ include_directories(
     "./i2pd/libi2pd_client")
 
 set(sources
-    "./src/channel.cpp"
     "./src/service.cpp"
     "./src/acceptor.cpp"
     "./src/connector.cpp")
+#    "./src/channel.cpp"
 
 add_library(i2poui ${sources})
 add_dependencies(i2poui i2pd)

@@ -1,5 +1,4 @@
 #include <i2poui/service.h>
-#include <i2poui/channel.h>
 #include <i2poui/acceptor.h>
 
 #include "I2PTunnel.h"
@@ -9,7 +8,8 @@ using namespace i2poui;
 
 using tcp = boost::asio::ip::tcp;
 
-Connector::Connector(const string& target_id, uint32_t timeout, boost::asio::io_service& ios, OnBuildConnector handler)
+Connector::Connector(const string& target_id, std::string private_key_filename, uint32_t timeout, boost::asio::io_service& ios)
+  : _ios(ios)
 {
     _i2p_tunnel =
           std::make_shared<i2p::client::I2PClientTunnel>("i2p_oui_client",
@@ -24,21 +24,25 @@ Connector::Connector(const string& target_id, uint32_t timeout, boost::asio::io_
     // do it ourselves.
     auto work = std::make_shared<boost::asio::io_service::work>(ios);
 
-    _i2p_tunnel->AddReadyCallback([ &ios
-                                 , h = std::move(handler)
-                                 , work
-                                 ](const boost::system::error_code& ec) {
+    // We need to set a timeout in order to trigger the timer for checking the
+    // tunnel readyness
+    _i2p_tunnel->SetConnectTimeout(timeout);
+}
+
+void Connector::is_ready_cb(OnReadyToConnect handler)
+{
+  
+  _i2p_tunnel->AddReadyCallback([ this
+                                  , h = std::move(handler)
+                                  ](const boost::system::error_code& ec) {
 
             // NOTE: Executing `h` through post here because I don't know
             // whether AddReadyCallback guarantees not to execute it's
             // handler right a way.
-            ios.post([ec, h = std::move(h)] {
+            _ios.post([ec, h = std::move(h)] {
                     h(ec);
                 });
 
         });
-
-    // We need to set a timeout in order to trigger the timer for checking the
-    // tunnel readyness
-    _i2p_tunnel->SetConnectTimeout(timeout);
+  
 }
