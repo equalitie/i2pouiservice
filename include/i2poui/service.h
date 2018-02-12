@@ -3,6 +3,7 @@
 #include <vector>
 #include <boost/asio.hpp>
 
+#include <i2poui/connection.h>
 #include <generic_oui_service.h>
 #include <i2poui/acceptor.h>
 #include <i2poui/connector.h>
@@ -25,7 +26,11 @@ public:
 
   boost::asio::io_service& get_io_service();
 
+  std::shared_ptr<Acceptor> build_acceptor(std::string private_key_filename);
+  std::shared_ptr<Connector> build_connector(const std::string& target_id, std::string private_key_filename);
+
   ~Service();
+
 
 protected:
   boost::asio::io_service& _ios;
@@ -34,8 +39,6 @@ protected:
   std::vector<std::shared_ptr<Acceptor>> _acceptors;
   std::vector<std::shared_ptr<Connector>> _connectors;
 
-  std::shared_ptr<Acceptor> build_acceptor(std::string private_key_filename);
-  std::shared_ptr<Connector> build_connector(const std::string& target_id, std::string private_key_filename);
   
 };
 

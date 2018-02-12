@@ -26,7 +26,7 @@ public:
     void is_ready(Token&&);
     
     template<class Token>
-    void accept(Token&&);
+    auto accept(Token&&);
 
 protected:
     friend class GenericService;
@@ -36,11 +36,11 @@ protected:
 template <class AcceptorImplementation>
 template <class Token>
 inline
-void GenericAcceptor<AcceptorImplementation>::accept(Token&& token)
+auto GenericAcceptor<AcceptorImplementation>::accept(Token&& token)
 {
     using Handler = typename boost::asio::handler_type
         < Token
-        , void(boost::system::error_code)>::type;
+      , void(boost::system::error_code)>::type;
 
     Handler handler(std::forward<Token>(token));
     boost::asio::async_result<Handler> result(handler);

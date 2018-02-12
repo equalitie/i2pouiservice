@@ -7,6 +7,7 @@ using namespace std;
 using namespace i2poui;
 
 using tcp = boost::asio::ip::tcp;
+namespace ip = boost::asio::ip;
 
 Connector::Connector(const string& target_id, std::string private_key_filename, uint32_t timeout, boost::asio::io_service& ios)
   : _ios(ios)
@@ -45,4 +46,26 @@ void Connector::is_ready_cb(OnReadyToConnect handler)
 
         });
   
+}
+
+/**
+   is called by GenericConnector::connect to set a callback when
+   when a new connection gets connected
+
+*/
+void Connector::connect_cb(OnConnect handler)
+{
+
+  _connections.push_back(Connection(_ios));
+  Connection& connection_socket =  _connections.back();
+
+
+    connection_socket.async_connect(ip::tcp::endpoint(ip::address_v4::loopback(), _port),
+                                    [this,
+                                     &connection_socket,
+                                     h = std::move(handler)]
+                          (const boost::system::error_code& ec) mutable {
+                            h(ec, connection_socket);
+                          });
+
 }

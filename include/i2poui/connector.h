@@ -9,14 +9,19 @@ namespace i2poui {
 
 class Connector : public  GenericConnector<Connector> {
 public:
-  using OnBuildConnector = std::function<void(boost::system::error_code)>;
-
   /**
        is called by GenericConnector::is_ready to set a callback when
        the acceptor is ready.
 
   */
   void is_ready_cb(OnReadyToConnect handler);
+
+  /**
+       is called by GenericConnector::connect to set a callback when
+       when a new connection gets connected
+
+  */
+  void connect_cb(OnConnect handler);
 
  protected:
   friend class Service;

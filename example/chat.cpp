@@ -14,7 +14,6 @@ using namespace boost;
 using namespace i2poui;
 
 std::shared_ptr<Acceptor> acceptor;
-
 static string remove_new_line(string s)
 {
     while (!s.empty() && *(--s.end()) == '\n') {
@@ -30,18 +29,16 @@ static string consume(asio::streambuf& buf, size_t n)
     return out;
 }
 
-static void run_chat(boost::asio::ip::tcp::socket connection) {
-    auto& ios = ch.get_io_service();
-
-    auto channel = std::make_shared<Channel>(std::move(ch));
+static void run_chat(const boost::system::error_code& ec, Connection& connection) {
+    auto& ios = connection.get_io_service();
 
     // This co-routine reads always from the socket and write it to std out.
-    asio::spawn(ios, [channel] (asio::yield_context yield) {
+    asio::spawn(ios, [&connection] (asio::yield_context yield) {
             system::error_code ec;
             asio::streambuf buffer(512);
 
             while (true) {
-                size_t n = asio::async_read_until(*channel, buffer, '\n', yield[ec]);
+                size_t n = asio::async_read_until(connection, buffer, '\n', yield[ec]);
 
                 if (ec) return;
 
@@ -52,7 +49,7 @@ static void run_chat(boost::asio::ip::tcp::socket connection) {
         });
 
     // This co-routine reads from std input and send it to peer
-    asio::spawn(ios, [&ios, channel] (auto yield) {
+    asio::spawn(ios, [&ios, &connection] (auto yield) {
             system::error_code ec;
             asio::posix::stream_descriptor input(ios, ::dup(STDIN_FILENO)); 
 
@@ -67,7 +64,7 @@ static void run_chat(boost::asio::ip::tcp::socket connection) {
 
               cout << "sending your message..." << endl;
               if (size > 0) 
-                asio::async_write(*channel, asio::buffer(consume(buffer, buffer.size())), yield[ec]);
+                asio::async_write(connection, asio::buffer(consume(buffer, buffer.size())), yield[ec]);
             }
       });
 }
@@ -77,23 +74,24 @@ static void connect_and_run_chat( Service& service
                                 , asio::yield_context yield)
 {
     cout << "Connecting to " << target_id << endl;
-    Connector connector = service.build_connector(target_id, yield);
-    Channel channel(service);
-    channel.connect(connector, yield);
-    run_chat(std::move(channel));
+    auto connector = service.build_connector(target_id, "");
+
+    connector->is_ready(yield);
+     
+    connector->connect(run_chat);
 }
 
 static void accept_and_run_chat( Service& service
                                  , asio::yield_context yield)
 {
-  acceptor = service.build_acceptor("private_key", [&] (const boost::system::error_code& ec) {
+  auto acceptor = service.build_acceptor("private_key");
         
   cout << "Accepting on " << acceptor->public_identity() << endl;
 
   cout << "Acceptor has been built" << endl;
 
   acceptor->accept(run_chat);
-  cout << "we are here" << endl;});
+  cout << "we are here" << endl;
 }
 
 static void print_usage(const char* app_name)

@@ -1,7 +1,7 @@
 #pragma once
 #include "generic_oui_acceptor.h"
+#include "connection.h"
 #include "Identity.h"
-
 // Forward declarations of i2p classes
 namespace i2p { namespace data {
     class PrivateKeys;
@@ -51,7 +51,7 @@ protected:
     std::shared_ptr<i2p::client::I2PServerTunnel> _i2p_server_tunnel;
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _tcp_acceptor;
 
-    std::vector<boost::asio::ip::tcp::socket> _connections;
+    std::vector<Connection> _connections;
     
 };
 
