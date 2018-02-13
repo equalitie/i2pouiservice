@@ -82,9 +82,9 @@ static void connect_and_run_chat( Service& service
     connector->connect(run_chat);
 
     //doesn't work
-    Connection& connection = connector->connect(yield);
+    // Connection& connection = connector->connect(yield);
 
-    run_chat(connection);
+    // run_chat(connection);
 }
 
 static void accept_and_run_chat( Service& service
@@ -96,10 +96,11 @@ static void accept_and_run_chat( Service& service
 
   cout << "Acceptor has been built" << endl;
 
-  Connection& connection = acceptor->accept(yield);
+  acceptor->accept(run_chat);
+  // Connection& connection = acceptor->accept(yield);
   
-  run_chat(connection);
-  cout << "we are here" << endl;
+  // run_chat(connection);
+  // cout << "we are here" << endl;
 }
 
 static void print_usage(const char* app_name)
