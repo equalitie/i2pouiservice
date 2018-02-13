@@ -1,27 +1,16 @@
 #pragma once
 
-namespace i2p { namespace client {
-    class I2PClientTunnel;
-}}
+#include "generic_oui_channel.h"
 
-template<class GenericConnectorImplementation>
-class GenericConnector {
+template<class ConnectorImplementation, class ConnectionImplementation>
+class GenericConnector : public GenericChannel<ConnectorImplementation> {
  protected:
-  using OnConnect = std::function<void(const boost::system::error_code&, i2poui::Connection&)>;
+  using OnConnect = std::function<void(const boost::system::error_code&, ConnectionImplementation&)>;
   using OnReadyToConnect = std::function<void(const boost::system::error_code&)>;
 
 public:
-      /**
-       optionally it can be queried to make sure that the acceptor  is actully
-       ready to receive connection.
-
-       @param Token&& the function to be called back when the acceptor is ready.
-    */
-    template<class Token>
-    void is_ready(Token&&);
-
     /**
-       is colled to make a connection to a i2p target
+       is colled to make a connection to a acceptor target
 
        @param Token&& the function to be called back when the acceptor is connector a connection.
     */
@@ -30,46 +19,26 @@ public:
 
 
     GenericConnector() {};
-    GenericConnector(uint16_t port, std::shared_ptr<i2p::client::I2PClientTunnel>);
+    GenericConnector(uint16_t port);
 
 };
 
-template<class ConnectorImplementation>
+template<class ConnectorImplementation, class ConnectionImplementation>
 inline
-GenericConnector<ConnectorImplementation>::GenericConnector(uint16_t port,
-        std::shared_ptr<i2p::client::I2PClientTunnel> i2p_tunnel)
+GenericConnector<ConnectorImplementation, ConnectionImplementation>::GenericConnector(uint16_t port)
 {
 }
 
-//TODO: This should be the same as acceptor::is_ready
-//This is channel is ready basically
-template<class ConnectorImplementation>
+template<class ConnectorImplementation, class ConnectionImplementation>
 template<class Token>
-void GenericConnector<ConnectorImplementation>::is_ready(Token&& token)
-{
-  using namespace boost;
-
-  using Handler = typename asio::handler_type
-    <Token, void(system::error_code)>::type;
-
-  Handler handler(std::forward<Token>(token));
-  asio::async_result<Handler> result(handler);
-  static_cast<ConnectorImplementation*>(this)->is_ready_cb(std::move(handler));
-  result.get();
-
-}
-
-
-template<class ConnectorImplementation>
-template<class Token>
-auto GenericConnector<ConnectorImplementation>::connect(Token&& token)
+  auto GenericConnector<ConnectorImplementation, ConnectionImplementation>::connect(Token&& token)
 {
   namespace asio = boost::asio;
   namespace sys = boost::system;
 
   using Handler = typename asio::handler_type
       < Token
-    , void(boost::system::error_code, i2poui::Connection)>::type;
+    , void(boost::system::error_code, ConnectionImplementation&)>::type;
 
   Handler handler(std::forward<Token>(token));
   asio::async_result<Handler> result(handler);

@@ -2,9 +2,6 @@
 
 #include <boost/asio.hpp>
 
-#include <generic_oui_acceptor.h>
-#include <generic_oui_connector.h>
-
 // Forward declarations of i2p classes
 namespace i2p { namespace data {
     class PrivateKeys;

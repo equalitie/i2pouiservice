@@ -77,8 +77,14 @@ static void connect_and_run_chat( Service& service
     auto connector = service.build_connector(target_id, "");
 
     connector->is_ready(yield);
-     
+
+    //works 
     connector->connect(run_chat);
+
+    //doesn't work
+    Connection& connection = connector->connect(yield);
+
+    run_chat(connection);
 }
 
 static void accept_and_run_chat( Service& service
@@ -90,7 +96,9 @@ static void accept_and_run_chat( Service& service
 
   cout << "Acceptor has been built" << endl;
 
-  acceptor->accept(run_chat);
+  Connection& connection = acceptor->accept(yield);
+  
+  run_chat(connection);
   cout << "we are here" << endl;
 }
 

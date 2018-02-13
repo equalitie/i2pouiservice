@@ -7,7 +7,7 @@ namespace i2p { namespace client {
 
 namespace i2poui {
 
-class Connector : public  GenericConnector<Connector> {
+class Connector : public  GenericConnector<Connector, Connection> {
 public:
   /**
        is called by GenericConnector::is_ready to set a callback when
