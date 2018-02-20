@@ -7,10 +7,10 @@ namespace i2p { namespace client {
     class I2PServerTunnel;
 }} // i2p::client namespace
 
-template<class AcceptorImplementation>
+template<class AcceptorImplementation, class ConnectionImplementation>
 class GenericAcceptor : GenericChannel<AcceptorImplementation>{
 protected:
-  using OnAccept = std::function<void(const boost::system::error_code&, boost::asio::ip::tcp::socket&)>;
+  using OnAccept = std::function<void(const boost::system::error_code&, ConnectionImplementation*)>;
     using OnReadyToAccept = std::function<void(const boost::system::error_code&)>;
   // Wait till we find a route to the service and tunnel is ready then try to
   // acutally connect and then call the handl
@@ -26,14 +26,14 @@ protected:
 
 };
 
-template <class AcceptorImplementation>
+template <class AcceptorImplementation, class ConnectionImplementation>
 template <class Token>
 inline
-auto GenericAcceptor<AcceptorImplementation>::accept(Token&& token)
+  auto GenericAcceptor<AcceptorImplementation, ConnectionImplementation>::accept(Token&& token)
 {
     using Handler = typename boost::asio::handler_type
         < Token
-      , void(boost::system::error_code)>::type;
+      , void(boost::system::error_code , ConnectionImplementation*)>::type;
 
     Handler handler(std::forward<Token>(token));
     boost::asio::async_result<Handler> result(handler);

@@ -14,7 +14,7 @@ namespace i2p { namespace client {
 
 namespace i2poui {
 
-class Acceptor : public GenericAcceptor<Acceptor> {
+class Acceptor : public GenericAcceptor<Acceptor, Connection> {
 
 public:
 

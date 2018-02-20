@@ -57,10 +57,10 @@ void Connector::connect_cb(OnConnect handler)
 {
 
   _connections.push_back(Connection(_ios));
-  Connection& connection_socket =  _connections.back();
+  Connection* connection_socket =  &_connections.back();
 
 
-    connection_socket.async_connect(ip::tcp::endpoint(ip::address_v4::loopback(), _port),
+    connection_socket->async_connect(ip::tcp::endpoint(ip::address_v4::loopback(), _port),
                                     [this,
                                      &connection_socket,
                                      h = std::move(handler)]

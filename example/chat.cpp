@@ -29,8 +29,9 @@ static string consume(asio::streambuf& buf, size_t n)
     return out;
 }
 
-static void run_chat(const boost::system::error_code& ec, Connection& connection) {
-    auto& ios = connection.get_io_service();
+static void run_chat(const boost::system::error_code& ec, Connection* connection_ptr) {
+  auto& connection = *connection_ptr;
+  auto& ios = connection.get_io_service();
 
     // This co-routine reads always from the socket and write it to std out.
     asio::spawn(ios, [&connection] (asio::yield_context yield) {
@@ -73,33 +74,35 @@ static void connect_and_run_chat( Service& service
                                 , string target_id
                                 , asio::yield_context yield)
 {
-    cout << "Connecting to " << target_id << endl;
-    auto connector = service.build_connector(target_id, "");
+  boost::system::error_code ec;
+  cout << "Connecting to " << target_id << endl;
+  auto connector = service.build_connector(target_id, "");
 
-    connector->is_ready(yield);
+  connector->is_ready(yield);
 
     //works 
-    connector->connect(run_chat);
+    //connector->connect(run_chat);
 
     //doesn't work
-    // Connection& connection = connector->connect(yield);
+  Connection* connection = connector->connect(yield[ec]);
 
-    // run_chat(connection);
+  run_chat(ec, connection);
 }
 
 static void accept_and_run_chat( Service& service
                                  , asio::yield_context yield)
 {
+  boost::system::error_code ec;
   auto acceptor = service.build_acceptor("private_key");
         
   cout << "Accepting on " << acceptor->public_identity() << endl;
 
   cout << "Acceptor has been built" << endl;
 
-  acceptor->accept(run_chat);
-  // Connection& connection = acceptor->accept(yield);
+  //acceptor->accept(run_chat);
+  Connection* connection = acceptor->accept(yield[ec]);
   
-  // run_chat(connection);
+  run_chat(ec, connection);
   // cout << "we are here" << endl;
 }
 
