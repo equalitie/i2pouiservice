@@ -60,7 +60,7 @@ void Connector::connect_cb(OnConnect handler)
   Connection* connection_socket =  &_connections.back();
 
 
-    connection_socket->async_connect(ip::tcp::endpoint(ip::address_v4::loopback(), _port),
+  connection_socket->_socket.async_connect(ip::tcp::endpoint(ip::address_v4::loopback(), _port),
                                     [this,
                                      &connection_socket,
                                      h = std::move(handler)]

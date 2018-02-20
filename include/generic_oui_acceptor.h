@@ -11,7 +11,7 @@ template<class AcceptorImplementation, class ConnectionImplementation>
 class GenericAcceptor : GenericChannel<AcceptorImplementation>{
 protected:
   using OnAccept = std::function<void(const boost::system::error_code&, ConnectionImplementation*)>;
-    using OnReadyToAccept = std::function<void(const boost::system::error_code&)>;
+  using OnReadyToAccept = std::function<void(const boost::system::error_code&)>;
   // Wait till we find a route to the service and tunnel is ready then try to
   // acutally connect and then call the handl
   

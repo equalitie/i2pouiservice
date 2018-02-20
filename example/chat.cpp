@@ -30,7 +30,7 @@ static string consume(asio::streambuf& buf, size_t n)
 }
 
 static void run_chat(const boost::system::error_code& ec, Connection* connection_ptr) {
-  auto& connection = *connection_ptr;
+  Connection& connection = *connection_ptr;
   auto& ios = connection.get_io_service();
 
     // This co-routine reads always from the socket and write it to std out.
@@ -80,8 +80,8 @@ static void connect_and_run_chat( Service& service
 
   connector->is_ready(yield);
 
-    //works 
-    //connector->connect(run_chat);
+   //works 
+   connector->connect(run_chat);
 
     //doesn't work
   Connection* connection = connector->connect(yield[ec]);

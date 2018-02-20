@@ -31,7 +31,7 @@ public:
   boost::asio::io_service& _ios;
   uint16_t _port;
   std::shared_ptr<i2p::client::I2PClientTunnel> _i2p_tunnel;
-  std::vector<boost::asio::ip::tcp::socket> _connections;
+  std::vector<Connection> _connections;
 
 };
 

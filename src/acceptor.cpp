@@ -83,9 +83,9 @@ void Acceptor::is_ready_cb(OnReadyToAccept handler)
 void Acceptor::accept_cb(OnAccept handler)
 {
   
-  _connections.push_back(boost::asio::ip::tcp::socket(_ios));
+  _connections.push_back(Connection(_ios));
   Connection* connection_socket = &_connections.back();
-  _tcp_acceptor->async_accept( *connection_socket,
+  _tcp_acceptor->async_accept( connection_socket->_socket,
                               [ this,
                                 &connection_socket,
                                 h = std::move(handler)
