@@ -51,11 +51,6 @@ Service& Service::operator=(Service&& other)
     return *this;
 }
 
-boost::asio::io_service& Service::get_io_service()
-{
-  return _ios;
-}
-
 Service::~Service() {}
 
 shared_ptr<Acceptor> Service::build_acceptor(std::string private_key_filename)

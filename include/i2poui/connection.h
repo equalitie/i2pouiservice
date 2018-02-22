@@ -23,33 +23,31 @@ public:
     {
     }
 
+  Connection(const Connection&) = delete;
+  Connection& operator=(const Connection&) = delete;
 
-    Connection(const Connection&) = delete;
-    //Connection& operator=(const Connection&) = delete;
+  Connection(Connection&&) = default;
+  Connection& operator=(Connection&&) = default;
 
-    Connection(Connection&&) = default;
-    Connection& operator=(Connection&&) = default;
-
-    boost::asio::io_service& get_io_service() {return _ios;}
-
-    template< class MutableBufferSequence
+  boost::asio::io_service& get_io_service() {return _ios;}
+  
+  template< class MutableBufferSequence
             , class ReadHandler>
     void async_read_some(const MutableBufferSequence&, ReadHandler&&);
 
-    template< class ConstBufferSequence
+  template< class ConstBufferSequence
             , class WriteHandler>
     void async_write_some(const ConstBufferSequence&, WriteHandler&&);
 
 
 protected:
-    friend class Service;
-    friend class Acceptor;
-    friend class Connector;
+  friend class Service;
+  friend class Acceptor;
+  friend class Connector;
 
-    boost::asio::io_service& _ios;
-    boost::asio::ip::tcp::socket _socket;
-    
-    std::shared_ptr<i2p::client::I2PService> i2p_oui_tunnel;
+  boost::asio::io_service& _ios;
+  boost::asio::ip::tcp::socket _socket;
+      
 };
 
 template< class MutableBufferSequence

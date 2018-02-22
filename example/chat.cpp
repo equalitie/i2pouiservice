@@ -29,12 +29,14 @@ static string consume(asio::streambuf& buf, size_t n)
     return out;
 }
 
-static void run_chat(const boost::system::error_code& ec, Connection* connection_ptr) {
-  Connection& connection = *connection_ptr;
-  auto& ios = connection.get_io_service();
+static void run_chat(const boost::system::error_code& ec, std::shared_ptr<Connection> connection_ptr) {
+  auto& ios = connection_ptr->get_io_service();
 
+  asio::spawn(ios, [] (asio::yield_context yield) { return;});
+  
     // This co-routine reads always from the socket and write it to std out.
-    asio::spawn(ios, [&connection] (asio::yield_context yield) {
+      asio::spawn(ios, [&connection_ptr] (asio::yield_context yield) {
+            Connection& connection = *connection_ptr;
             system::error_code ec;
             asio::streambuf buffer(512);
 
@@ -50,7 +52,9 @@ static void run_chat(const boost::system::error_code& ec, Connection* connection
         });
 
     // This co-routine reads from std input and send it to peer
-    asio::spawn(ios, [&ios, &connection] (auto yield) {
+    asio::spawn(ios, [&ios, &connection_ptr] (auto yield) {
+            Connection& connection = *connection_ptr;
+
             system::error_code ec;
             asio::posix::stream_descriptor input(ios, ::dup(STDIN_FILENO)); 
 
@@ -80,11 +84,11 @@ static void connect_and_run_chat( Service& service
 
   connector->is_ready(yield);
 
-   //works 
-   connector->connect(run_chat);
+  cout << "connector tunnel to the server is established" << endl;
 
-    //doesn't work
-  Connection* connection = connector->connect(yield[ec]);
+  std::shared_ptr<Connection> connection = connector->connect(yield);
+
+ cout << "connection to the server is established" << endl;
 
   run_chat(ec, connection);
 }
@@ -99,8 +103,12 @@ static void accept_and_run_chat( Service& service
 
   cout << "Acceptor has been built" << endl;
 
+  acceptor->is_ready(yield);
+
+  cout << "Acceptor tunnel is established" << endl;
+
   //acceptor->accept(run_chat);
-  Connection* connection = acceptor->accept(yield[ec]);
+  std::shared_ptr<Connection> connection = acceptor->accept(yield[ec]);
   
   run_chat(ec, connection);
   // cout << "we are here" << endl;
@@ -116,7 +124,7 @@ static void print_usage(const char* app_name)
 
 int main(int argc, char* const* argv)
 {
-    if (argc != 2 && argc != 4) {
+    if (argc != 2 && argc != 3) {
         print_usage(argv[0]);
         return 1;
     }

@@ -24,7 +24,7 @@ public:
   //access functions
   uint32_t  get_i2p_tunnel_ready_timeout() { return 5*60; /* 5 minutes */ };
 
-  boost::asio::io_service& get_io_service();
+  boost::asio::io_service& get_io_service() {   return _ios; };
 
   std::shared_ptr<Acceptor> build_acceptor(std::string private_key_filename);
   std::shared_ptr<Connector> build_connector(const std::string& target_id, std::string private_key_filename);

@@ -62,7 +62,7 @@ Acceptor::Acceptor(string private_key_filename, uint32_t timeout, boost::asio::i
 
   // I2Pd doesn't implicitly keep io_service bussy, so we need to
   // do it ourselves.
-  auto work = std::make_shared<boost::asio::io_service::work>(ios);
+  _waiting_work = std::make_shared<boost::asio::io_service::work>(ios);
 
   // We need to set a timeout in order to trigger the timer for checking the
   // tunnel readyness
@@ -74,20 +74,27 @@ void Acceptor::is_ready_cb(OnReadyToAccept handler)
 {
   // Wait till we find a route to the service and tunnel is ready then try to
   // acutally connect and then call the handl
-  _i2p_server_tunnel->AddReadyCallback([ handler = move(handler)](const boost::system::error_code& ec) mutable {
-                                         handler(ec);
-                                       });
+  _i2p_server_tunnel->AddReadyCallback([ this,
+                                         h = move(handler)](const boost::system::error_code& ec) mutable {
+      // NOTE: Executing `h` through post here because I don't know
+      // whether AddReadyCallback guarantees not to execute it's
+      // handler right a way.
+      _ios.post([ec, h = std::move(h)] {
+          h(ec);
+        });
 
+    });
 }
 
 void Acceptor::accept_cb(OnAccept handler)
 {
-  
-  _connections.push_back(Connection(_ios));
-  Connection* connection_socket = &_connections.back();
+
+  _connections.push_back(std::make_shared<Connection>(_ios));
+  std::shared_ptr<Connection> connection_socket =  _connections.back();
+
   _tcp_acceptor->async_accept( connection_socket->_socket,
                               [ this,
-                                &connection_socket,
+                                connection_socket,
                                 h = std::move(handler)
                                 ] (const boost::system::error_code& ec) mutable {
                                  h(ec, connection_socket);

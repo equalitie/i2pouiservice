@@ -9,6 +9,8 @@ namespace i2poui {
 
 class Connector : public  GenericConnector<Connector, Connection> {
 public:
+  boost::asio::io_service& get_io_service() {  return _ios; }
+
   /**
        is called by GenericConnector::is_ready to set a callback when
        the acceptor is ready.
@@ -31,7 +33,7 @@ public:
   boost::asio::io_service& _ios;
   uint16_t _port;
   std::shared_ptr<i2p::client::I2PClientTunnel> _i2p_tunnel;
-  std::vector<Connection> _connections;
+  std::vector<std::shared_ptr<Connection>> _connections;
 
 };
 

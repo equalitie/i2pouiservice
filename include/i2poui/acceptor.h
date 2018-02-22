@@ -36,12 +36,10 @@ public:
 
     std::string public_identity() const;
 
-
 protected:
     friend class Service;
     // Acceptor is built by the i2poui::Service
     Acceptor(std::string private_key_filename, uint32_t timeout, boost::asio::io_service& ios);
-
 
     void load_private_key(std::string key_file_name);
 
@@ -51,7 +49,7 @@ protected:
     std::shared_ptr<i2p::client::I2PServerTunnel> _i2p_server_tunnel;
     std::unique_ptr<boost::asio::ip::tcp::acceptor> _tcp_acceptor;
 
-    std::vector<Connection> _connections;
+    std::vector<std::shared_ptr<Connection>> _connections;
     
 };
 

@@ -12,6 +12,10 @@ protected:
   // Wait till we find a route to the service and tunnel is ready then try to
   // acutally connect and then call the handl
 
+  //the channel will use this mock work to prevent asio service
+  //from exiting while channel is waiting for accepting or connecting
+  std::shared_ptr<boost::asio::io_service::work> _waiting_work;
+
 public:
     /**
        optionally it can be queried to make sure that the channel is actully
@@ -20,13 +24,13 @@ public:
        @param Token&& the function to be called back when the channel is ready.
     */
     template<class Token>
-    void is_ready(Token&&);
+    auto is_ready(Token&&);
 
  };
 
 template<class ChannelImplementation>
 template<class Token>
-void GenericChannel<ChannelImplementation>::is_ready(Token&& token)
+auto GenericChannel<ChannelImplementation>::is_ready(Token&& token)
 {
     using namespace boost;
 

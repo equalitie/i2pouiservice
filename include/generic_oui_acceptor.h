@@ -8,9 +8,9 @@ namespace i2p { namespace client {
 }} // i2p::client namespace
 
 template<class AcceptorImplementation, class ConnectionImplementation>
-class GenericAcceptor : GenericChannel<AcceptorImplementation>{
+class GenericAcceptor : public GenericChannel<AcceptorImplementation>{
 protected:
-  using OnAccept = std::function<void(const boost::system::error_code&, ConnectionImplementation*)>;
+  using OnAccept = std::function<void(const boost::system::error_code&, std::shared_ptr<ConnectionImplementation>)>;
   using OnReadyToAccept = std::function<void(const boost::system::error_code&)>;
   // Wait till we find a route to the service and tunnel is ready then try to
   // acutally connect and then call the handl
@@ -33,7 +33,7 @@ inline
 {
     using Handler = typename boost::asio::handler_type
         < Token
-      , void(boost::system::error_code , ConnectionImplementation*)>::type;
+      , void(boost::system::error_code , std::shared_ptr<ConnectionImplementation>)>::type;
 
     Handler handler(std::forward<Token>(token));
     boost::asio::async_result<Handler> result(handler);

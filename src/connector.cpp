@@ -23,7 +23,7 @@ Connector::Connector(const string& target_id, std::string private_key_filename, 
 
     // I2Pd doesn't implicitly keep io_service bussy, so we need to
     // do it ourselves.
-    auto work = std::make_shared<boost::asio::io_service::work>(ios);
+    _waiting_work = std::make_shared<boost::asio::io_service::work>(ios);
 
     // We need to set a timeout in order to trigger the timer for checking the
     // tunnel readyness
@@ -56,16 +56,15 @@ void Connector::is_ready_cb(OnReadyToConnect handler)
 void Connector::connect_cb(OnConnect handler)
 {
 
-  _connections.push_back(Connection(_ios));
-  Connection* connection_socket =  &_connections.back();
-
+  _connections.push_back(std::make_shared<Connection>(_ios));
+  std::shared_ptr<Connection> connection_socket =  _connections.back();
 
   connection_socket->_socket.async_connect(ip::tcp::endpoint(ip::address_v4::loopback(), _port),
                                     [this,
-                                     &connection_socket,
+                                     connection_socket,
                                      h = std::move(handler)]
                           (const boost::system::error_code& ec) mutable {
-                            h(ec, connection_socket);
+                                             h(ec, connection_socket);
                           });
 
 }

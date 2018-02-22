@@ -5,7 +5,7 @@
 template<class ConnectorImplementation, class ConnectionImplementation>
 class GenericConnector : public GenericChannel<ConnectorImplementation> {
  protected:
-  using OnConnect = std::function<void(const boost::system::error_code&, ConnectionImplementation*)>;
+  using OnConnect = std::function<void(const boost::system::error_code&, std::shared_ptr<ConnectionImplementation>)>;
   using OnReadyToConnect = std::function<void(const boost::system::error_code&)>;
 
 public:
@@ -38,7 +38,7 @@ auto GenericConnector<ConnectorImplementation, ConnectionImplementation>::connec
 
   using Handler = typename asio::handler_type
       < Token
-    , void(boost::system::error_code, ConnectionImplementation*)>::type;
+    , void(boost::system::error_code, std::shared_ptr<ConnectionImplementation>)>::type;
 
   Handler handler(std::forward<Token>(token));
   asio::async_result<Handler> result(handler);
