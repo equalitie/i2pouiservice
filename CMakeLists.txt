@@ -39,6 +39,8 @@ target_link_libraries(i2poui
 set(I2POUI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
 
 ################################################################################
+if (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
+
 project(chat)
 
 find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS filesystem
@@ -68,4 +70,6 @@ target_link_libraries(chat
     z
     ${Boost_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT})
+
+endif() # if not Android
 
