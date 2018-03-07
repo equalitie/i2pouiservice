@@ -4,6 +4,8 @@ set(CMAKE_BUILD_TYPE Debug)
 set(BOOST_VERSION 1.62)
 
 ################################################################################
+option(WITH_BINARY "" OFF)
+option(WITH_GUI "" OFF)
 add_subdirectory(./i2pd/build)
 
 ################################################################################
