@@ -39,11 +39,15 @@ public:
             , class WriteHandler>
     void async_write_some(const ConstBufferSequence&, WriteHandler&&);
 
-
+  //TODO::make a realy close, call the server and inform that they don't need
+  //this stream
+  void close() {
+    return;
+  }
 protected:
   friend class Service;
-  friend class Acceptor;
-  friend class Connector;
+  friend class Server;
+  friend class Client;
 
   boost::asio::io_service& _ios;
   boost::asio::ip::tcp::socket _socket;

@@ -1,3 +1,5 @@
+#define BOOST_COROUTINES_NO_DEPRECATION_WARNING
+
 #include <iostream>
 #include <boost/asio/signal_set.hpp>
 #include <boost/asio/spawn.hpp>
@@ -6,14 +8,15 @@
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/write.hpp>
 
+#include "generic_connection.h"
 #include <i2poui.h>
 
 using namespace std;
-using namespace boost;
+namespace asio = boost::asio;
 
 using namespace i2poui;
 
-std::shared_ptr<Acceptor> acceptor;
+std::shared_ptr<Server> server;
 static string remove_new_line(string s)
 {
     while (!s.empty() && *(--s.end()) == '\n') {
@@ -29,15 +32,14 @@ static string consume(asio::streambuf& buf, size_t n)
     return out;
 }
 
-static void run_chat(const boost::system::error_code& ec, std::shared_ptr<Connection> connection_ptr) {
-  auto& ios = connection_ptr->get_io_service();
+static void run_chat(const boost::system::error_code& ec, ouinet::GenericConnection&  connection) {
+  auto& ios = connection.get_io_service();
 
   asio::spawn(ios, [] (asio::yield_context yield) { return;});
   
     // This co-routine reads always from the socket and write it to std out.
-      asio::spawn(ios, [&connection_ptr] (asio::yield_context yield) {
-            Connection& connection = *connection_ptr;
-            system::error_code ec;
+      asio::spawn(ios, [&connection] (asio::yield_context yield) {
+            boost::system::error_code ec;
             asio::streambuf buffer(512);
 
             while (true) {
@@ -52,17 +54,15 @@ static void run_chat(const boost::system::error_code& ec, std::shared_ptr<Connec
         });
 
     // This co-routine reads from std input and send it to peer
-    asio::spawn(ios, [&ios, &connection_ptr] (auto yield) {
-            Connection& connection = *connection_ptr;
-
-            system::error_code ec;
+    asio::spawn(ios, [&ios, &connection] (auto yield) {
+            boost::system::error_code ec;
             asio::posix::stream_descriptor input(ios, ::dup(STDIN_FILENO)); 
 
             asio::streambuf buffer(512);
 
             cout << "Enter a message to the peer" << endl;
             while (true) {
-              system::error_code ec;
+              boost::system::error_code ec;
               size_t size = asio::async_read_until(input, buffer, '\n',
                                                    yield[ec]);
               if (ec) break;
@@ -82,11 +82,11 @@ static void connect_and_run_chat( Service& service
   cout << "Connecting to " << target_id << endl;
   auto connector = service.build_connector(target_id, "");
 
-  connector->is_ready(yield);
+  //connector->wait_to_get_ready(yield);
 
-  cout << "connector tunnel to the server is established" << endl;
+  //cout << "connector tunnel to the server is established" << endl;
 
-  std::shared_ptr<Connection> connection = connector->connect(yield);
+  auto connection = connector->connect(yield);
 
  cout << "connection to the server is established" << endl;
 
@@ -97,18 +97,16 @@ static void accept_and_run_chat( Service& service
                                  , asio::yield_context yield)
 {
   boost::system::error_code ec;
-  auto acceptor = service.build_acceptor("private_key");
+  auto server = service.build_acceptor("private_key");
         
-  cout << "Accepting on " << acceptor->public_identity() << endl;
+  cout << "Accepting on " << server->public_identity() << endl;
 
   cout << "Acceptor has been built" << endl;
-
-  acceptor->is_ready(yield);
 
   cout << "Acceptor tunnel is established" << endl;
 
   //acceptor->accept(run_chat);
-  std::shared_ptr<Connection> connection = acceptor->accept(yield[ec]);
+  auto connection = server->accept(yield[ec]);
   
   run_chat(ec, connection);
   // cout << "we are here" << endl;

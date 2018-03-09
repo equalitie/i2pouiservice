@@ -1,7 +1,6 @@
 #include <vector>
 
 #include <i2poui/service.h>
-#include <i2poui/acceptor.h>
 
 //i2p stuff
 #include "I2PTunnel.h"
@@ -37,36 +36,36 @@ Service::Service(const string& datadir, boost::asio::io_service& ios)
 Service::Service(Service&& other)
   :
     _ios(other._ios)
-  ,_data_dir(move(other._data_dir))
-  , _acceptors(move(other._acceptors))
-  , _connectors(move(other._connectors))
+    ,_data_dir(std::move(other._data_dir))
+    , _servers(std::move(other._servers))
+    , _clients(std::move(other._clients))
 {}
 
 Service& Service::operator=(Service&& other)
 {
     assert(&_ios == &other._ios);
-    _data_dir = move(other._data_dir);
-    _acceptors = move(other._acceptors);
-    _connectors = move(other._connectors);
+    _data_dir = std::move(other._data_dir);
+    _servers = std::move(other._servers);
+    _clients = std::move(other._clients);
     return *this;
 }
 
 Service::~Service() {}
 
-shared_ptr<Acceptor> Service::build_acceptor(std::string private_key_filename)
+shared_ptr<Server> Service::build_acceptor(std::string private_key_filename)
 {
     using namespace boost;
 
-    _acceptors.push_back(std::shared_ptr<Acceptor>(new Acceptor(_data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios)));
+    _servers.push_back(std::shared_ptr<Server>(new Server(_data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios)));
 
-    return _acceptors.back();
+    return _servers.back();
 }
 
-shared_ptr<Connector> Service::build_connector(const std::string& target_id, std::string private_key_filename)
+shared_ptr<Client> Service::build_connector(const std::string& target_id, std::string private_key_filename)
 {
     using namespace boost;
 
-    _connectors.push_back(std::shared_ptr<Connector>(new Connector(target_id, _data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios)));
+    _clients.push_back(std::shared_ptr<Client>(new Client(target_id, _data_dir + "/" + private_key_filename, get_i2p_tunnel_ready_timeout(), _ios)));
 
-    return _connectors.back();
+    return _clients.back();
 }

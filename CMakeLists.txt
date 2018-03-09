@@ -26,8 +26,8 @@ include_directories(
 
 set(sources
     "./src/service.cpp"
-    "./src/acceptor.cpp"
-    "./src/connector.cpp"
+    "./src/server.cpp"
+    "./src/client.cpp"
     "./src/connection.cpp")
 
 add_library(i2poui ${sources})
