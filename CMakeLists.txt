@@ -9,7 +9,14 @@ option(WITH_GUI "" OFF)
 add_subdirectory(./i2pd/build)
 
 ################################################################################
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
+    set(IFADDRS_TARGET ifaddrs)
+    add_library(${IFADDRS_TARGET} ${IFADDRS_SOURCES})
+endif()
+
+################################################################################
 project(i2poui)
+find_package(OpenSSL REQUIRED)
 find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -ggdb ${SANITIZE}")
@@ -26,14 +33,14 @@ set(sources
     "./src/acceptor.cpp")
 
 add_library(i2poui ${sources})
-add_dependencies(i2poui i2pd)
+add_dependencies(i2poui i2pd ${IFADDRS_TARGET})
 
 target_link_libraries(i2poui
     i2pdclient
     libi2pd
-    ssl
-    crypto
     z
+    ${OPENSSL_LIBRARIES}
+    ${IFADDRS_TARGET}
     ${Boost_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT})
 
@@ -67,8 +74,7 @@ target_link_libraries(chat
     i2poui
     i2pdclient
     libi2pd
-    ssl
-    crypto
+    ${OPENSSL_LIBRARIES}
     z
     ${Boost_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT})
