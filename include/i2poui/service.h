@@ -12,6 +12,7 @@
 namespace i2poui {
 
   class Service  {
+    
 public:
 
   Service(const std::string& datadir, boost::asio::io_service&);
@@ -27,8 +28,8 @@ public:
 
   boost::asio::io_service& get_io_service() {   return _ios; };
 
-  std::shared_ptr<Server> build_acceptor(std::string private_key_filename);
-  std::shared_ptr<Client> build_connector(const std::string& target_id, std::string private_key_filename);
+  std::shared_ptr<Server> build_server(std::string private_key_filename);
+  std::shared_ptr<Client> build_client(const std::string& target_id, std::string private_key_filename);
 
   ~Service();
 
@@ -38,7 +39,6 @@ protected:
 
   std::vector<std::shared_ptr<Server>> _servers;
   std::vector<std::shared_ptr<Client>> _clients;
-
   
 };
 

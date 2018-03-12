@@ -52,7 +52,7 @@ Service& Service::operator=(Service&& other)
 
 Service::~Service() {}
 
-shared_ptr<Server> Service::build_acceptor(std::string private_key_filename)
+shared_ptr<Server> Service::build_server(std::string private_key_filename)
 {
     using namespace boost;
 
@@ -61,7 +61,7 @@ shared_ptr<Server> Service::build_acceptor(std::string private_key_filename)
     return _servers.back();
 }
 
-shared_ptr<Client> Service::build_connector(const std::string& target_id, std::string private_key_filename)
+shared_ptr<Client> Service::build_client(const std::string& target_id, std::string private_key_filename)
 {
     using namespace boost;
 
